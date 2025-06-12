@@ -18,3 +18,7 @@ Actualmente el repositorio cuenta con cinco directorios:
 3. `docs` contiene documentos como la propuesta de trabajo y el informe final.
 4. `environment` contiene los entornos Conda necesarios para replicar los códigos utilizado.
 5. `notebooks` contiene los cuadernos de Jupyter utilizados en las diversas fases del estudio.
+
+## Referencias
+
+El conjunto de datos CAMELS-ES puede descargarse de este repostorio en Zenodo: https://zenodo.org/records/15040948
