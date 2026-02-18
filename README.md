@@ -22,3 +22,5 @@ Actualmente el repositorio cuenta con cinco directorios:
 ## Referencias
 
 El conjunto de datos CAMELS-ES puede descargarse de este repostorio en Zenodo: https://zenodo.org/records/15040948
+
+Casado-Rodríguez, J., Ramos-Gomes, G., & Salamon, P. (2026). Simulación del caudal en España utilizando redes neuronales Long Short-Term Memory. _Ingeniería del Agua, 30_(1), 63–78. https://doi.org/10.4995/ia.25084
