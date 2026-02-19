@@ -1,16 +1,16 @@
 # directorios de trabajo
 rutas:
     anuario_aforos:
-        orig: C:/Datasets/anuario_aforos
+        orig: /home/chus-casado/Datos/Anuario_aforos
         repo: ../../data/anuario_aforos
     EFAS: 
-        orig: C:/Datasets/EFASv5/iberia
+        orig: /home/chus-casado/Datos/EFASv5/iberia
         repo: ../../data/EFAS5
     EMO:
-        orig: C:/Datasets/EMO1
+        orig: /home/chus-casado/Datos/EMO1
         repo: ../../data/EMO1
     CAMELS: 
-        orig: C:/Datasets/CAMELS-ES
+        orig: /home/chus-casado/Datos/CAMELS-ES
         repo: ../../data/CAMELS-ES
         
 # configuración de CAMELS-ES
@@ -18,10 +18,10 @@ CAMELS-ES:
     # periodo de estudio
     periodo:
         inicio: 1991-10-01
-        final: 2020-09-30
+        final: 2021-09-30
     # límites de área de cuenca
     area:
-        min: 100
+        min: 50
         max:
     # disponibilidad mínima de datos de caudal
     caudal:
