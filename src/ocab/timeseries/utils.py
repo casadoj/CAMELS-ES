@@ -52,40 +52,6 @@ def define_observed_period(
     return df
 
 
-def time_encoding(
-    time: np.ndarray,
-    period: int
-) -> Tuple[np.ndarray, np.ndarray]:
-    """
-    Transforms time feature values in an xarray.DataArray to sine and cosine components.
-
-    Parameters:
-    -----------
-    time: xarray.DataArray
-        An xarray.DataArray with time feature values (e.g., month, day of year).
-    period: integer
-        The period of the time feature (e.g., 12 for months, 7 for days of the week).
-
-    Returns:
-    --------
-    sin_da, cos_da (tuple of xarray.DataArray):
-        Sine and cosine transformations of the time feature values.
-    """
-    
-    # Normalize time feature values to [0, 2π]
-    if time.min() == 1:
-        norm_da = (time - 1) * 2 * np.pi / period
-    elif time.min() == 0:
-        norm_da = time * 2 * np.pi / period
-    else:
-        norm_da = (time - 1) * 2 * np.pi / period
-        
-    # correct leap years, if necessary
-    norm_da = norm_da.where(norm_da <= np.pi * 2, np.pi * 2)
-    
-    return np.round(np.sin(norm_da), 8), np.round(np.cos(norm_da), 8)
-
-
 def clean_discharge(
     ts: pd.DataFrame,
     q: str = 'discharge_mm',
