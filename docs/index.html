@@ -18,6 +18,11 @@
             width: 100%; 
             z-index: 1; 
         }
+        /* Grayscale filter for Leaflet tile layer container */
+        .grayscale-map .leaflet-tile-container {
+            filter: grayscale(100%);
+            -webkit-filter: grayscale(100%);
+        }
         #sidebar { 
             position: fixed;
             top: 50%;
@@ -225,20 +230,34 @@
         // Disable default zoom control during initialization
         var map = L.map('map', { zoomControl: false }).setView([40.4167, -5], 6);
 
+        // Standard OpenStreetMap
         var standard = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; OpenStreetMap contributors'
         });
         standard.addTo(map);
 
-        var relief = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
-            maxZoom: 17,
-            attribution: 'Map data: &copy; OSM, SRTM | Style: &copy; OpenTopoMap'
+        // Standard OpenStreetMap in Grayscale
+        var standardGrayscale = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors',
+            className: 'grayscale-map'
+        });
+
+        var relief = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
+            maxZoom: 18,
+            attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ, TomTom, Intermap, iPC, USGS, FAO, NPS, NRCAN, GeoBase, Kadaster NL, Ordnance Survey, Esri Japan, METI, Esri China (Hong Kong), swisstopo, MapmyIndia, &copy; OpenStreetMap contributors'
+        });
+
+        var aerial = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            maxZoom: 18,
+            attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
         });
 
         // Add base layers control to top-right
         var baseMaps = {
             "Standard Map": standard,
-            "Relief (DEM)": relief
+            "Grayscale": standardGrayscale,
+            "Relief": relief,
+            "Aerial": aerial
         };
         L.control.layers(baseMaps, null, { position: 'topright' }).addTo(map);
 
@@ -527,10 +546,10 @@
                 ${makeRow('Catchment', `${Number(props.catch_skm).toFixed(1)} km²`)}
                 ${makeRow('Capacity', `${props.cap_mcm}hm³`)}
                 <hr style="margin: 4px 0; border: 0; border-top: 1px solid #ddd;">
-                <small><strong>Meteorology (ROCIO-IBEB)</strong></small><br>
-                ${makeRow('Precipitation', `${precipVal != null ? Math.round(precipVal) : (props.precip_mm || 'N/A')} mm/yr`)}
-                ${makeRow('Temperature', `${tempVal != null ? Number(tempVal).toFixed(1) : (props.temp_degC || 'N/A')} °C`)}
-                ${makeRow('PET', `${petVal != null ? Math.round(petVal) : (props.pet_mm || 'N/A')} mm/yr`)}
+                <small><strong>Meteorology (${activeDatasetLabel})</strong></small><br>
+                ${makeRow('Precipitation', `${precipVal != null ? Math.round(precipVal) : 'N/A'} mm/yr`)}
+                ${makeRow('Temperature', `${tempVal != null ? Number(tempVal).toFixed(1) : 'N/A'} °C`)}
+                ${makeRow('PET', `${petVal != null ? Math.round(petVal) : 'N/A'} mm/yr`)}
                 <hr style="margin: 4px 0; border: 0; border-top: 1px solid #ddd;">
                 <small><strong>Hydrology</strong></small><br>
                 ${makeRow('Filling', `${props.filling != null ? Number(props.filling * 100).toFixed(1) : 'N/A'} %`)}
@@ -562,6 +581,18 @@
                     Explore Time Series
                 </a>
             `;
+        }
+
+        function updateReservoirSymbology() {
+            if (!reservoirs) return;
+            reservoirs.eachLayer(function(layer) {
+                const newPopupContent = buildReservoirPopup(layer.feature.properties);
+                layer.setPopupContent(newPopupContent);
+
+                if (layer.isPopupOpen && layer.isPopupOpen()) {
+                    layer.getPopup().setContent(newPopupContent);
+                }
+            });
         }
         
         fetch('./layers/stations.geojson')
@@ -775,6 +806,7 @@
                 input.onchange = function() {
                     currentVariable = this.value;
                     updateStationSymbology();
+                    updateReservoirSymbology();
                     drawLegend();
                 };
             });
@@ -784,6 +816,7 @@
                     e.stopPropagation();
                     currentDataset = this.getAttribute('data-dataset');
                     updateStationSymbology();
+                    updateReservoirSymbology();
                     container.querySelectorAll('.dataset-btn').forEach(b => b.classList.remove('active'));
                     this.classList.add('active');
                 };
