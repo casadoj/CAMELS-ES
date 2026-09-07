@@ -234,19 +234,22 @@
         var standard = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; OpenStreetMap contributors'
         });
-        standard.addTo(map);
+        // standard.addTo(map);
 
-        // Standard OpenStreetMap in Grayscale
+        // Grayscale OpenStreetMap
         var standardGrayscale = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; OpenStreetMap contributors',
             className: 'grayscale-map'
         });
+        standardGrayscale.addTo(map);
 
+        // ESRI relief
         var relief = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
             maxZoom: 18,
             attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ, TomTom, Intermap, iPC, USGS, FAO, NPS, NRCAN, GeoBase, Kadaster NL, Ordnance Survey, Esri Japan, METI, Esri China (Hong Kong), swisstopo, MapmyIndia, &copy; OpenStreetMap contributors'
         });
 
+        // ESRI aerial
         var aerial = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
             maxZoom: 18,
             attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
@@ -254,7 +257,7 @@
 
         // Add base layers control to top-right
         var baseMaps = {
-            "Standard Map": standard,
+            "Standard": standard,
             "Grayscale": standardGrayscale,
             "Relief": relief,
             "Aerial": aerial
@@ -367,10 +370,9 @@
         const symbologyConfig = {
             discharge_mm: {
                 label: "Discharge [mm/yr]",
-                // grades: [0, 50, 100, 150, 200, 300, 400, 600, 800, 1000, 2000],
                 grades: [0, 50, 100, 150, 200, 300, 400, 600, 800, 1000, 1500, 2000],
-                // colors: ['#67000d', '#c1272d', '#e5534b', '#f7847e', '#f9adac', '#edd1d2', '#c9d4ed', '#a6bdff', '#809fff', '#5a77ef', '#3b4cc0'],
-                colors: ['#67000d', '#c1272d', '#e5534b', '#f7847e', '#f9adac', '#edd1d2', '#c9d4ed', '#a6bdff', '#809fff', '#5a77ef', '#4a61d8', '#3b4cc0']
+                // colors: ['#67000d', '#c1272d', '#e5534b', '#f7847e', '#f9adac', '#edd1d2', '#c9d4ed', '#a6bdff', '#809fff', '#5a77ef', '#4a61d8', '#3b4cc0']
+                colors: ['#fde725', '#b5de2b', '#6ece58', '#35b779', '#1f9e89', '#26828e', '#31688e', '#3b528b', '#453781', '#482677', '#481569', '#440154']
             },
             precip_mm: {
                 label: "Precipitation [mm/yr]",
@@ -412,9 +414,16 @@
         let currentVariable = 'discharge_mm';
         let currentDataset = 'rocio';
         const meteoVariables = ['precip_mm', 'temp_degC', 'pet_mm'];
+        const performanceMetrics = ['KGE', 'Beta-KGE', 'Alpha-NSE', 'Pearson-r'];
 
         function getActiveProperty(props, variable = currentVariable, dataset = currentDataset) {
-            let key = meteoVariables.includes(variable) ? `${variable}_${dataset}` : variable;
+            // Map discharge_mm to outflow_mm for reservoir feature properties
+                let targetVar = variable;
+                if (variable === 'discharge_mm' && props && !('discharge_mm' in props) && ('outflow_mm' in props)) {
+                    targetVar = 'outflow_mm';
+                }
+
+            let key = meteoVariables.includes(targetVar) ? `${targetVar}_${dataset}` : targetVar;
             const rawVal = props[key];
             if (rawVal === null || rawVal === undefined || rawVal === "") return null;
             const num = Number(rawVal);
@@ -422,7 +431,6 @@
         }
 
         function getStationColor(d, variable) {
-            const performanceMetrics = ['KGE', 'Beta-KGE', 'Alpha-NSE', 'Pearson-r'];
             if (performanceMetrics.includes(variable) && (d === null || d === undefined || isNaN(d))) return 'transparent';
             if (d === null || d === undefined || isNaN(d)) return '#cccccc';
 
@@ -517,6 +525,14 @@
             });
         }
 
+        function getReservoirColor(props) {
+            if (performanceMetrics.includes(currentVariable)) {
+                return '#3388ff';
+            }
+            const val = getActiveProperty(props, currentVariable, currentDataset);
+            return getStationColor(val, currentVariable);
+        }
+
         function buildReservoirPopup(props) {
             let id = props.ID || props.id || "ID";
             let name = toTitleCase(props.name || props.NAME || "Reservoir");
@@ -586,6 +602,11 @@
         function updateReservoirSymbology() {
             if (!reservoirs) return;
             reservoirs.eachLayer(function(layer) {
+                // polygon fill colour
+                const strokeColor = getReservoirColor(layer.feature.properties);
+                layer.setStyle({ color: strokeColor });
+                
+                // popup window
                 const newPopupContent = buildReservoirPopup(layer.feature.properties);
                 layer.setPopupContent(newPopupContent);
 
@@ -640,7 +661,16 @@
             .then(res => res.json())
             .then(data => {
                 reservoirs = L.geoJSON(data, {
-                    style: { pane: 'reservoirPane' },
+                    style: function(feature) {
+                        return {
+                            pane: 'reservoirPane',
+                            color: getReservoirColor(feature.properties),
+                            weight: 1.5,
+                            fillColor: '#3388ff',
+                            fillOpacity: 0.5
+                        };
+                    },
+                    // style: { pane: 'reservoirPane' },
                     onEachFeature: function (feature, layer) {
                         let props = feature.properties;
                         let id = props.ID || props.id || "ID";
