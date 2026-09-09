@@ -7,10 +7,13 @@ AGGREGATION = {
     # 'discharge_mm_sim': 'sum',
     'filling': 'mean',
     'inflow_mm': 'sum',
+    'inflow': 'mean',
     'outflow_mm': 'sum',
+    'outflow': 'mean',
     'pet_mm': 'sum',
     'precip_mm': 'sum',
     'storage_mcm': 'mean',
+    'storage': 'mean',
     'temp_degC': 'mean',
 }
 
@@ -20,12 +23,15 @@ ROUNDING = {
     'filling': 3,
     'inflow_cms': 3,
     'inflow_mm': 1,
+    'inflow': 3,
     'outflow_cms': 3,
     'outflow_mm': 1,
+    'outflow': 3,
     'pet_mm': 1,
     'precip_mm': 1,
     'temp_degC': 1,
     'storage_mcm': 3,
+    'storage': 3
 }
 
 
