@@ -1,7 +1,10 @@
 import numpy as np
 import pandas as pd
 from datetime import datetime
-from typing import Dict, Optional, Tuple
+from typing import Dict, Optional
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def resample_daily(
@@ -17,13 +20,33 @@ def resample_daily(
     return df
 
 
-def compute_filling(df: pd.DataFrame, capacity: float) -> pd.DataFrame:
-    """Computes reservoir filling out of storage and total capacity"""
+def compute_filling(ts: pd.DataFrame, capacity: float) -> pd.DataFrame:
+    """Computes reservoir filling out of storage and total capacity.
     
-    if 'storage' in df.columns:
-        df['filling'] = df['storage'] / capacity
+    Parameters
+    ----------
+    ts: pandas.DataFrame
+        Time series that includes a column representing reservoir storage: "storage" or 
+        "storage_mcm".
+    capacity: float
+        Maximum storage capacity. The units must be the same as those in the time series.
 
-    return df
+    Returns
+    -------
+    pandas.DataFrame
+        Same as the input timeseries, but with a new column called 'filling'.
+    """
+
+    # Find storage column
+    storage_col = next((col for col in ['storage', 'storage_mcm'] if col in ts.columns), None)
+    if storage_col is None:
+        raise ValueError('The input DataFrame must contain either "storage" or "storage_mcm" column.')
+
+    # compute filling
+    ts = ts.copy()
+    ts['filling'] = ts[storage_col] / capacity
+
+    return ts
 
 
 def define_observed_period(
@@ -103,4 +126,69 @@ def clean_discharge(
     cols_discharge = [col for col in ['discharge_cms', 'discharge_mm'] if col in ts.columns]
     ts.loc[mask_low | mask_high, cols_discharge] = np.nan
 
+    return ts
+
+
+def clean_storage(
+    ts: pd.DataFrame,
+    filling: str = 'filling',
+    storage: str | None = 'storage',
+    max_fill: float = 2.0,
+    max_rate: float | None = None,
+    window: int = 7
+    ) -> pd.DataFrame:
+    """Removes invalid values from a reservoir filling time series.
+
+    Values are set to NaN if filling values exceed bounds [0, max_fill] or if absolute 
+    deviations from a centered moving median exceed `max_rate`.
+
+    Parameters
+    ----------
+    ts : pandas.DataFrame
+        DataFrame containing reservoir storage and filling time series.
+    filling : str, default 'filling'
+        Column name for filling values (expected as a ratio/percentage time series).
+    storage : str, default 'storage'
+        Column name for storage values.
+    max_fill : float, default 2.0
+        Maximum allowable filling ratio. Values below 0 or above this limit are set to NaN.
+    max_rate : float or None, default None
+        Maximum acceptable absolute deviation from the rolling median (e.g., 0.1 for 10% change). 
+        Time steps with a deviation above this threshold are converted to NaN. If None, this filter is skipped.
+    window : int, default 7
+        Window width for the centered rolling median.
+
+    Returns
+    -------
+    pandas.DataFrame
+        A copy of the input DataFrame with invalid values in `storage` and `filling` set to NaN.
+    """
+
+    if filling not in ts.columns:
+        raise ValueError(f'"{filling}" is not a column in the input DataFrame.')
+
+    cols = [filling]
+    if storage is not None:
+        if storage in ts.columns:
+            cols.append(storage)
+        else:
+            raise ValueError(f'"{storage}" is not a column in the input DataFrame.')
+
+    ts = ts.copy()
+
+    # remove values exceeding the thresholds
+    mask_thr = (ts[filling] < 0) | (ts[filling] > max_fill)
+    if mask_thr.sum() > 0:
+        logger.info(f'{mask_thr.sum()} filling values exceed the thresholds.')
+        ts.loc[mask_thr, cols] = np.nan
+
+    # relative error compared with the rolling median
+    if max_rate is not None:
+        median = ts[filling].rolling(window, center=True, min_periods=int(np.floor(window / 2))).median()
+        rate = (ts[filling] - median)
+        mask_rate = rate.abs() > max_rate
+        if mask_rate.sum() > 0:
+            logger.info(f'{mask_rate.sum()} filling values exceed the maximum rate {max_rate}.')
+            ts.loc[mask_rate, cols] = np.nan
+    
     return ts
