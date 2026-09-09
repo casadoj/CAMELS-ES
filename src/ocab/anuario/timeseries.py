@@ -8,11 +8,11 @@ logger = logging.getLogger(__name__)
 
 
 def get_discharge(
-        path: Path, 
+        path: Path,
         id: Union[int, List[int]] = None, 
         start: Union[str, pd.Timestamp] = None, 
         end: Union[str, pd.Timestamp] = None
-        ) -> pd.DataFrame:
+    ) -> pd.DataFrame:
     """
     Extracts daily discharge time series from the 'afliq.csv' file of the Anuario de Aforos. 
     The series can be clipped to the specific period and stations of interest.
@@ -95,7 +95,7 @@ def get_reservoir_series(
         start: Optional[Union[str, pd.Timestamp]] = None, 
         end: Optional[Union[str, pd.Timestamp]] = None,
         inflow: bool = False,
-        fill_value: float = 0
+        fill_value: float = np.nan
     ) -> Dict[int, pd.DataFrame]:
     """Extracts daily reservoir time series from the 'afliqe.csv' file of the 'Anuario de Aforos'. 
     The series can be clipped to the period and stations of interest.
@@ -181,8 +181,9 @@ def get_reservoir_series(
         ts.dropna(axis=1, how='all', inplace=True)
 
         # compute inflows
+        # WARNING: @casadoj computing inflow before cleaning the time series is dangerous!
         if inflow & required_cols.issubset(ts):
-            ts = compute_inflows(ts, fill_value=fill_value)
+            ts = compute_inflow(ts, fill_value=fill_value)
 
         # save
         timeseries[ID] = ts.round(3)
@@ -190,10 +191,10 @@ def get_reservoir_series(
     return timeseries
 
 
-def compute_inflows(
+def compute_inflow(
         data: pd.DataFrame, 
-        fill_value: float = 0,
-    ) -> Optional[pd.DataFrame]:
+        fill_value: float = np.nan,
+    ) -> pd.DataFrame:
     """Computes reservoir inflow time series based on storage and outflow data.
 
     The function handles two mass-balance calculation types:
@@ -203,7 +204,7 @@ def compute_inflows(
     Parameters:
     -----------
     data: pandas.DataFrame
-        Input data containing columns 'storage' (million m³), 'outflow' (m³/s), 
+        Input time series containing columns 'storage' (million m³), 'outflow' (m³/s), 
         and 'type' (1 or 2).
     fill_value: float, optional
         Value used to replace negative calculated inflows. Defaults to 0.
@@ -215,6 +216,11 @@ def compute_inflows(
         flag (1 for valid, 0 for corrected negative values).
     """
 
+    required_cols = {'storage', 'outflow', 'type'}
+    if not required_cols.issubset(data.columns):
+        missing = required_cols - set(data.columns)
+        raise ValueError(f'The input DataFrame is missing required column(s): {missing}')
+    
     # change in storage (m3/s)
     delta_t = data.index.to_series().diff().dt.total_seconds()
     delta_v = data['storage'].diff() / delta_t * 1e6
