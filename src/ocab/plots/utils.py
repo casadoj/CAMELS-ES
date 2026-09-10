@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, Tuple
 
 AGGREGATION = {
     'discharge_mm': 'sum',
@@ -8,8 +8,8 @@ AGGREGATION = {
     'filling': 'mean',
     'inflow_mm': 'sum',
     'inflow': 'mean',
-    'outflow_mm': 'sum',
     'outflow': 'mean',
+    'outflow_mm': 'sum',
     'pet_mm': 'sum',
     'precip_mm': 'sum',
     'storage_mcm': 'mean',
@@ -21,17 +21,17 @@ ROUNDING = {
     'discharge_mm': 1,
     # 'discharge_mm_sim': 1,
     'filling': 3,
+    'inflow': 3,
     'inflow_cms': 3,
     'inflow_mm': 1,
-    'inflow': 3,
+    'outflow': 3,
     'outflow_cms': 3,
     'outflow_mm': 1,
-    'outflow': 3,
     'pet_mm': 1,
     'precip_mm': 1,
     'temp_degC': 1,
+    'storage': 3,
     'storage_mcm': 3,
-    'storage': 3
 }
 
 
@@ -179,7 +179,7 @@ def define_y_limits(
         round_primary: int,
         scale: float = 1,
         cols_primary: Tuple = ('precip_mm', 'discharge_mm', 'pet_mm'),
-        cols_secondary: Optional[Tuple] = ('temp_degC')
+        cols_secondary: Tuple | None = ('temp_degC')
 ):
     """
     """
