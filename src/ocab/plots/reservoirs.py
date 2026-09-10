@@ -778,6 +778,154 @@ def plot_reservoir_timeseries(
         fig.show()
 
 
+# def create_reservoir_html(
+#     fig, 
+#     path: str,
+#     start: str,
+#     end: str
+# ):
+#     """Wraps a Plotly figure into the full validation HTML template.
+    
+#     Parameters:
+#     -----------
+#     fig:
+#         Result of `plot_reservoir_timeseries()`
+#     path: string
+#         Name of the HTML file where the figure wil be saved
+#     start: string
+#         Start date of the time series. Format YYYY-mm-dd
+#     end: string
+#         End date of the time series. Format YYYY-mm-dd
+#     """
+
+#     fig.update_layout(height=None, width=None, autosize=True)
+
+#     # Convert figure to HTML div string
+#     plotly_html = pio.to_html(
+#         fig, 
+#         full_html=False, 
+#         include_plotlyjs='cdn',
+#         include_mathjax=False,
+#         config={'responsive': True, 'displaylogo': False}
+#     )
+
+#     title = Path(path).stem
+
+#     full_page_html = f"""
+#         <html>
+#         <head>
+#             <!-- Google tag (gtag.js) -->
+#             <script async src="https://www.googletagmanager.com/gtag/js?id=G-E565MB2DE7"></script>
+#             <script>
+#                 window.dataLayer = window.dataLayer || [];
+#                 function gtag(){{dataLayer.push(arguments);}}
+#                 gtag('js', new Date());
+#                 gtag('config', 'G-E565MB2DE7');
+#             </script>
+
+#             <meta charset="utf-8" />
+#             <title>beaverses_{title}</title>
+#             <style>
+#                 body {{ 
+#                     margin: 0; padding: 0; height: 100vh; width: 100vw;
+#                     display: flex; 
+#                     flex-direction: row; 
+#                     font-family: sans-serif;
+#                     overflow: hidden;
+#                 }}
+#                 .hydrograph {{ 
+#                     flex: 7; 
+#                     height: 100vh; 
+#                     min-width: 0;
+#                     position: relative; /* Added to anchor the button */
+#                 }}
+#                 .google-form {{ 
+#                     flex: 3; 
+#                     height: 100vh; 
+#                     border-left: 1px solid #ddd;
+#                     display: flex;
+#                 }}
+#                 .hydrograph > .plotly-graph-div {{ height: 100% !important; width: 100% !important; }}
+                
+#                 iframe {{ width: 100%; height: 100%; border: none; }}
+                
+#                 /* Updated: Positioned at bottom right of the plot panel */
+#                 .back-nav {{ 
+#                     position: absolute; 
+#                     bottom: 20px; 
+#                     right: 20px; 
+#                     z-index: 9999; 
+#                 }}
+#                 .back-btn {{
+#                     text-decoration: none; 
+#                     color: white; 
+#                     font-size: 14px; 
+#                     font-weight: bold; 
+#                     background-color: steelblue; /* Solid color looks better at bottom */
+#                     padding: 10px 16px; 
+#                     border-radius: 5px; 
+#                     box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+#                     transition: background-color 0.3s;
+#                 }}
+#                 .back-btn:hover {{
+#                     background-color: #2e5d86;
+#                 }}
+#             </style>
+#         </head>
+#         <body>
+#             <div class="hydrograph">
+#                 <div class="back-nav">
+#                     <a href="../../../index.html" class="back-btn">← Back to map</a>
+#                 </div>
+#                 {plotly_html}
+#             </div>
+
+#             <div class="google-form" id="form-container"></div>
+
+#             <script>
+#                 (function() {{
+#                     const baseUrl = "https://docs.google.com/forms/d/e/1FAIpQLSdcqEbw2bhJXLUqHFCQLBz0LEbCBUesnxeT32L5l5XkNAfMyg/viewform?embedded=true";
+#                     const emailEntryId = "204970380";
+#                     const stationEntryId = "889543648";
+#                     const startEntry1Id = "1625252996";
+#                     const endEntry1Id = "314932285";
+#                     const startEntry2Id = "1590382732";
+#                     const endEntry2Id = "1770881539";
+#                     const startEntry3Id = "208904126";
+#                     const endEntry3Id = "1937793816";
+
+#                     const userEmail = localStorage.getItem('userEmail') || "";
+#                     const filename = window.location.pathname.split('/').pop();
+#                     const stationId = filename.replace('.html', '');
+#                     const start = "{start}";
+#                     const end = "{end}";
+
+#                     const finalUrl = baseUrl + 
+#                         "&entry." + stationEntryId + "=" + stationId + 
+#                         "&entry." + emailEntryId + "=" + encodeURIComponent(userEmail) + 
+#                         "&entry." + startEntry1Id + "=" + start + 
+#                         "&entry." + endEntry1Id + "=" + end +
+#                         "&entry." + startEntry2Id + "=" + start + 
+#                         "&entry." + endEntry2Id + "=" + end +
+#                         "&entry." + startEntry3Id + "=" + start +
+#                         "&entry." + endEntry3Id + "=" + end;
+
+#                     document.getElementById('form-container').innerHTML = 
+#                         '<iframe src="' + finalUrl + '" frameborder="0">Loading form…</iframe>';
+#                 }})();
+
+#                 window.addEventListener('load', function() {{
+#                     setTimeout(function() {{ window.dispatchEvent(new Event('resize')); }}, 100); 
+#                 }});
+#             </script>
+#         </body>
+#         </html>
+#         """
+    
+#     with open(path, "w", encoding="utf-8") as f:
+#         f.write(full_page_html)
+
+
 def create_reservoir_html(
     fig, 
     path: str,
@@ -829,27 +977,66 @@ def create_reservoir_html(
                 body {{ 
                     margin: 0; padding: 0; height: 100vh; width: 100vw;
                     display: flex; 
-                    flex-direction: row; 
                     font-family: sans-serif;
                     overflow: hidden;
                 }}
+                
+                /* Hydrograph panel expands to fill space */
                 .hydrograph {{ 
-                    flex: 7; 
+                    flex: 1; 
                     height: 100vh; 
                     min-width: 0;
-                    position: relative; /* Added to anchor the button */
+                    position: relative;
+                    transition: flex 0.3s ease-in-out;
                 }}
-                .google-form {{ 
-                    flex: 3; 
+                
+                /* Sidebar Drawer in document flow */
+                .google-form-panel {{ 
+                    width: 0;
                     height: 100vh; 
-                    border-left: 1px solid #ddd;
+                    background: #fff;
+                    border-left: 0px solid #ddd;
+                    box-shadow: -4px 0 15px rgba(0,0,0,0.15);
+                    z-index: 10000;
+                    position: relative;
+                    transition: width 0.3s ease-in-out;
                     display: flex;
                 }}
+                
+                /* Open State applied via body class */
+                body.form-open .google-form-panel {{
+                    width: 450px;
+                    border-left: 1px solid #ddd;
+                }}
+
+                /* Toggle Button placed 5% from top */
+                .toggle-btn {{
+                    position: absolute;
+                    left: -42px;
+                    top: 5%;
+                    transform: translateY(0);
+                    background-color: steelblue;
+                    color: white;
+                    border: none;
+                    padding: 12px 10px;
+                    cursor: pointer;
+                    border-radius: 6px 0 0 6px;
+                    box-shadow: -2px 2px 5px rgba(0,0,0,0.2);
+                    font-weight: bold;
+                    writing-mode: vertical-rl;
+                    text-orientation: mixed;
+                    font-size: 13px;
+                    letter-spacing: 1px;
+                    z-index: 10001;
+                }}
+                .toggle-btn:hover {{
+                    background-color: #2e5d86;
+                }}
+
                 .hydrograph > .plotly-graph-div {{ height: 100% !important; width: 100% !important; }}
                 
                 iframe {{ width: 100%; height: 100%; border: none; }}
                 
-                /* Updated: Positioned at bottom right of the plot panel */
                 .back-nav {{ 
                     position: absolute; 
                     bottom: 20px; 
@@ -861,7 +1048,7 @@ def create_reservoir_html(
                     color: white; 
                     font-size: 14px; 
                     font-weight: bold; 
-                    background-color: steelblue; /* Solid color looks better at bottom */
+                    background-color: steelblue; 
                     padding: 10px 16px; 
                     border-radius: 5px; 
                     box-shadow: 0 2px 5px rgba(0,0,0,0.2);
@@ -874,15 +1061,36 @@ def create_reservoir_html(
         </head>
         <body>
             <div class="hydrograph">
-                <div class="back-nav">
-                    <a href="../../../index.html" class="back-btn">← Back to map</a>
-                </div>
                 {plotly_html}
             </div>
 
-            <div class="google-form" id="form-container"></div>
+            <div class="google-form-panel" id="form-panel">
+                <button class="toggle-btn" id="toggle-btn" onclick="toggleForm()">📋 Open Form</button>
+                <div style="width: 100%; height: 100%; min-width: 450px;" id="form-container"></div>
+            </div>
 
             <script>
+                function toggleForm() {{
+                    const body = document.body;
+                    const btn = document.getElementById('toggle-btn');
+                    
+                    body.classList.toggle('form-open');
+                    
+                    if (body.classList.contains('form-open')) {{
+                        btn.innerHTML = '✕ Close Form';
+                    }} else {{
+                        btn.innerHTML = '📋 Open Form';
+                    }}
+                    
+                    let startTime = Date.now();
+                    let resizeInterval = setInterval(() => {{
+                        window.dispatchEvent(new Event('resize'));
+                        if (Date.now() - startTime > 350) {{
+                            clearInterval(resizeInterval);
+                        }}
+                    }}, 30);
+                }}
+
                 (function() {{
                     const baseUrl = "https://docs.google.com/forms/d/e/1FAIpQLSdcqEbw2bhJXLUqHFCQLBz0LEbCBUesnxeT32L5l5XkNAfMyg/viewform?embedded=true";
                     const emailEntryId = "204970380";
@@ -915,7 +1123,7 @@ def create_reservoir_html(
                 }})();
 
                 window.addEventListener('load', function() {{
-                    setTimeout(function() {{ window.dispatchEvent(new Event('resize')); }}, 100); 
+                    setTimeout(function() {{ window.dispatchEvent(new Event('resize')); }}, 200); 
                 }});
             </script>
         </body>
