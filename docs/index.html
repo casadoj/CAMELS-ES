@@ -560,7 +560,7 @@
                 </div>
                 ${makeRow('River', `${river} (${basin})`)}
                 ${makeRow('Catchment', `${Number(props.catch_skm).toFixed(1)} km²`)}
-                ${makeRow('Capacity', `${props.cap_mcm}hm³`)}
+                ${makeRow('Capacity', `${Number(props.cap_mcm).toFixed(1)} hm³`)}
                 <hr style="margin: 4px 0; border: 0; border-top: 1px solid #ddd;">
                 <small><strong>Meteorology (${activeDatasetLabel})</strong></small><br>
                 ${makeRow('Precipitation', `${precipVal != null ? Math.round(precipVal) : 'N/A'} mm/yr`)}
