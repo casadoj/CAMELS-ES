@@ -814,6 +814,15 @@ def create_reservoir_html(
     full_page_html = f"""
         <html>
         <head>
+            <!-- Google tag (gtag.js) -->
+            <script async src="https://www.googletagmanager.com/gtag/js?id=G-E565MB2DE7"></script>
+            <script>
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){{dataLayer.push(arguments);}}
+                gtag('js', new Date());
+                gtag('config', 'G-E565MB2DE7');
+            </script>
+
             <meta charset="utf-8" />
             <title>beaverses_{title}</title>
             <style>
